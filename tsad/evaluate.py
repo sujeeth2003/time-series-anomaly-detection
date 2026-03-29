@@ -6,3 +6,14 @@
 import numpy as np
 
 
+def alarms_from_scores(scores, threshold, min_gap=50):
+    """Turn a score stream into discrete alarm times: first sample above threshold, then a refractory gap."""
+    idx = np.flatnonzero(scores > threshold)
+    out, last = [], -10 ** 9
+    for i in idx:
+        if i - last >= min_gap:
+            out.append(int(i))
+        last = i
+    return out
+
+
