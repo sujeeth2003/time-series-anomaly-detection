@@ -33,3 +33,16 @@ class IsolationForestDetector:
     def score(self, F):
         return -self.model.decision_function(self.scaler.transform(F))
 
+
+class SupervisedDetector:
+    """Gradient boosting on window features with labelled history; score = P(anomaly)."""
+
+    def __init__(self, seed=0):
+        self.model = GradientBoostingClassifier(n_estimators=150, max_depth=3, random_state=seed)
+
+    def fit(self, F, y):
+        self.model.fit(F, y)
+        return self
+
+    def score(self, F):
+        return self.model.predict_proba(F)[:, 1]
