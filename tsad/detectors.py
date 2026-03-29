@@ -19,3 +19,17 @@ def zscore_baseline(X, w=200):
     return np.max(scores, axis=0)
 
 
+class IsolationForestDetector:
+    """Unsupervised: fit on a stretch assumed to be mostly normal, score = -decision_function."""
+
+    def __init__(self, seed=0):
+        self.scaler = StandardScaler()
+        self.model = IsolationForest(n_estimators=200, contamination="auto", random_state=seed)
+
+    def fit(self, F):
+        self.model.fit(self.scaler.fit_transform(F))
+        return self
+
+    def score(self, F):
+        return -self.model.decision_function(self.scaler.transform(F))
+
