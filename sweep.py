@@ -16,3 +16,17 @@ ap.add_argument("--seeds", type=int, default=8)
 ap.add_argument("--budget", type=float, default=6.0)
 a = ap.parse_args()
 
+res = {}
+for seed in range(a.seeds):
+    XA, yA, _ = make_stream(seed=10 * seed, n=24000, n_events=16)
+    XB, _, _ = make_stream(seed=10 * seed + 1, n=20000, n_events=0)
+    XC, yC, evC = make_stream(seed=10 * seed + 2, n=24000, n_events=16)
+    FA, _ = window_features(XA); FB, _ = window_features(XB); FC, _ = window_features(XC)
+    iso = IsolationForestDetector(seed).fit(FA[yA == 0])
+    sup = SupervisedDetector(seed).fit(FA, yA)
+    for name, sb, sc in (("rolling z-score", zscore_baseline(XB), zscore_baseline(XC)),
+                         ("isolation forest", iso.score(FB), iso.score(FC)),
+                         ("gradient boosting (supervised)", sup.score(FB), sup.score(FC))):
+        r = evaluate(sc, evC, threshold_for_fpr(sb, a.budget), len(XC))
+        res.setdefault(name, []).append((r["event_recall"], r["false_alarms_per_hour"], r["median_delay_s"]))
+
