@@ -30,3 +30,28 @@ def main():
     iso = IsolationForestDetector(a.seed).fit(FA[yA == 0])                  # trained on normal-looking windows only
     sup = SupervisedDetector(a.seed).fit(FA, yA)
 
+    detectors = {
+        "rolling z-score": (zscore_baseline(XB), zscore_baseline(XC)),
+        "isolation forest": (iso.score(FB), iso.score(FC)),
+        "gradient boosting (supervised)": (sup.score(FB), sup.score(FC)),
+    }
+    print(f"false-alarm budget: {a.budget}/hour on normal data;  test stream: {len(XC)} samples, {len(evC)} events\n")
+    print(f"{'detector':<32}{'event recall':>13}{'false alarms':>14}{'FA / hour':>11}{'median delay (s)':>18}")
+    for name, (sb, sc) in detectors.items():
+        thr = threshold_for_fpr(sb, a.budget)
+        r = evaluate(sc, evC, thr, len(XC))
+        print(f"{name:<32}{r['event_recall']:>13.2f}{r['false_alarms']:>14d}{r['false_alarms_per_hour']:>11.1f}{r['median_delay_s']:>18.1f}")
+
+    print("\nper anomaly type (event recall / median delay in s), supervised vs z-score:")
+    for kind in ("spike", "drift", "stuck", "variance"):
+        ev = [e for e in evC if e[2] == kind]
+        row = []
+        for name in ("rolling z-score", "gradient boosting (supervised)"):
+            sb, sc = detectors[name]
+            r = evaluate(sc, ev, threshold_for_fpr(sb, a.budget), len(XC))
+            row.append(f"{r['event_recall']:.2f} / {r['median_delay_s']:.1f}s")
+        print(f"  {kind:<9} z-score {row[0]:<14} supervised {row[1]}")
+
+
+if __name__ == "__main__":
+    main()
