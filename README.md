@@ -17,3 +17,16 @@ Design choices that matter:
 - **Causal features.** A test checks that changing the future never changes earlier feature rows, so the same code is valid online.
 - **Train / calibrate / test on three different streams.**
 
+## Results (synthetic, 8 seeds, budget = 6 false alarms/hour, mean +/- std)
+```
+detector                            event recall       FA / hour    median delay (s)
+rolling z-score                       0.77 +/- 0.07       7.1 +/- 6.6        12.9 +/- 8.7
+isolation forest                      0.98 +/- 0.04       4.0 +/- 3.7         3.4 +/- 1.2
+gradient boosting (supervised)        0.62 +/- 0.09       5.8 +/- 3.5         5.7 +/- 3.2
+```
+Reading it honestly:
+- **Isolation Forest on window features wins** here: it catches nearly every event, earliest, with the fewest false alarms, without needing any labels.
+- The **supervised model does worse**, because it only sees 16 labelled events to learn from and the labels cover long stretches of which only some windows look abnormal. Supervised detection would need far more labelled history; this is a data-volume result, not a general claim about supervised models.
+- The **z-score baseline** is strong on spikes and variance changes (near-instant) but is poor on slow **drift**, because a rolling baseline adapts to the drift. That is exactly why drift needs window/slope features.
+- False-alarm rates vary a lot from seed to seed (std about as large as the mean): treat any single-seed number, including the one in `run_experiment.py`, as an example.
+
