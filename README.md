@@ -30,3 +30,11 @@ Reading it honestly:
 - The **z-score baseline** is strong on spikes and variance changes (near-instant) but is poor on slow **drift**, because a rolling baseline adapts to the drift. That is exactly why drift needs window/slope features.
 - False-alarm rates vary a lot from seed to seed (std about as large as the mean): treat any single-seed number, including the one in `run_experiment.py`, as an example.
 
+## Run
+```bash
+pip install numpy scikit-learn
+python -m unittest discover -s tests          # 5 tests
+python run_experiment.py                      # one seed, with a per-anomaly-type breakdown
+python sweep.py --seeds 8                     # the table above
+```
+To use real data, replace `make_stream` with your own `(X[n, channels], labels, events)`; nothing else assumes synthetic data.
