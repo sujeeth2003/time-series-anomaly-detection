@@ -30,3 +30,8 @@ for seed in range(a.seeds):
         r = evaluate(sc, evC, threshold_for_fpr(sb, a.budget), len(XC))
         res.setdefault(name, []).append((r["event_recall"], r["false_alarms_per_hour"], r["median_delay_s"]))
 
+print(f"{a.seeds} seeds, false-alarm budget {a.budget}/hour on normal data (mean +/- std over seeds)\n")
+print(f"{'detector':<32}{'event recall':>16}{'FA / hour':>16}{'median delay (s)':>20}")
+for name, rows in res.items():
+    m, s = np.nanmean(rows, axis=0), np.nanstd(rows, axis=0)
+    print(f"{name:<32}{m[0]:>10.2f} +/- {s[0]:.2f}{m[1]:>10.1f} +/- {s[1]:.1f}{m[2]:>12.1f} +/- {s[2]:.1f}")
