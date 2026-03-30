@@ -38,3 +38,11 @@ def evaluate(scores, events, threshold, n, fs=10.0, min_gap=50, grace=100):
         "mean_delay_s": float(np.mean(hit_delay)) if hit_delay else float("nan"),
     }
 
+
+def threshold_for_fpr(scores_normal, target_false_alarms_per_hour, fs=10.0, min_gap=50):
+    """Pick the smallest threshold whose false-alarm rate on known-normal data stays under the target."""
+    hours = len(scores_normal) / fs / 3600
+    for thr in np.quantile(scores_normal, np.linspace(0.90, 0.99999, 400)):
+        if len(alarms_from_scores(scores_normal, thr, min_gap)) / hours <= target_false_alarms_per_hour:
+            return float(thr)
+    return float(scores_normal.max())
